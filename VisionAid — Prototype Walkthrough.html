@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>VisionAid — Prototype Walkthrough</title>
+<style>
+  :root{
+    --ink:#161B33; --paper:#F4F1E9; --navy:#1B2A52; --slate:#4C5D82;
+    --amber:#C77D2E; --red:#B4432F; --line:rgba(22,27,51,0.16);
+    box-sizing:border-box;
+    padding-top: env(safe-area-inset-top,0px);
+    padding-bottom: env(safe-area-inset-bottom,0px);
+  }
+  *{box-sizing:border-box;}
+  html{height:100%; scroll-padding-top: env(safe-area-inset-top,0px);}
+  body{
+    margin:0; min-height:100%; background:#232842; color:var(--ink);
+    font-family:'Helvetica Neue',Arial,sans-serif;
+    display:flex; justify-content:center; padding:24px 14px 40px;
+  }
+  .wrap{ width:100%; max-width:480px; }
+  .head{ color:var(--paper); text-align:center; margin-bottom:16px; }
+  .head h1{ font-family:Georgia,'Cambria',serif; font-size:24px; margin:0 0 4px; }
+  .head p{ font-size:12.5px; color:#B9BFD6; margin:0; }
+
+  .frame{
+    background: var(--paper); border:1px solid var(--ink);
+    padding:14px; position:relative;
+  }
+  .badges{ display:flex; gap:6px; margin-bottom:10px; flex-wrap:wrap; }
+  .badge{
+    font-size:10.5px; letter-spacing:.02em; padding:4px 8px;
+    border:1px solid var(--navy); color:var(--navy); display:flex; align-items:center; gap:4px;
+  }
+  .dot{ width:6px; height:6px; border-radius:50%; background:#3E8E5A; }
+
+  .scene{
+    position:relative; width:100%; aspect-ratio:4/3; background:#DCD6C4;
+    border:1px solid var(--ink); overflow:hidden;
+  }
+  .scene svg{ position:absolute; inset:0; width:100%; height:100%; }
+  .scanline{
+    position:absolute; left:0; right:0; height:2px; background:var(--amber);
+    opacity:0; top:0;
+  }
+  .scanline.on{ animation: sweep 1.6s ease-in-out infinite; opacity:1; }
+  @keyframes sweep{ 0%{top:4%;} 50%{top:94%;} 100%{top:4%;} }
+
+  .box{
+    position:absolute; border:2px solid var(--red); opacity:0;
+    transition: opacity .25s ease;
+  }
+  .box.show{ opacity:1; }
+  .box .tag{
+    position:absolute; top:-22px; left:-2px; background:var(--red); color:#fff;
+    font-size:10.5px; padding:2px 6px; white-space:nowrap;
+  }
+  .box.obj{ border-color:var(--navy); }
+  .box.obj .tag{ background:var(--navy); }
+  .box.text{ border-color:var(--amber); }
+  .box.text .tag{ background:var(--amber); }
+
+  .dir{
+    position:absolute; bottom:8px; font-size:20px; color:var(--red);
+    opacity:0; transition:opacity .25s ease;
+  }
+  .dir.show{ opacity:1; }
+  .dir.left{ left:8px; } .dir.right{ right:8px; } .dir.ahead{ left:50%; transform:translateX(-50%); }
+
+  .caption{
+    margin-top:12px; min-height:58px; border:1px solid var(--ink);
+    background:#fff; padding:10px 12px; display:flex; gap:9px; align-items:flex-start;
+  }
+  .spk{ width:16px; flex:none; margin-top:2px; color:var(--navy); }
+  .spk svg{ width:16px; height:16px; }
+  .ctext{ font-size:13.5px; line-height:1.45; }
+  .ctext .priority{ display:inline-block; font-size:10px; letter-spacing:.04em; color:#fff; background:var(--red); padding:1px 6px; margin-bottom:4px; }
+
+  .controls{ display:flex; align-items:center; justify-content:space-between; margin-top:12px; gap:8px; flex-wrap:wrap; }
+  .steps{ display:flex; gap:5px; }
+  .steps span{ width:7px; height:7px; border-radius:50%; background:var(--line); }
+  .steps span.active{ background:var(--navy); }
+  button{
+    font-family:inherit; font-size:12.5px; border:1px solid var(--navy); background:var(--navy);
+    color:#fff; padding:7px 14px; cursor:pointer;
+  }
+  button.ghost{ background:transparent; color:var(--navy); }
+  button:active{ transform:translateY(1px); }
+
+  .row2{ display:flex; justify-content:space-between; align-items:center; margin-top:10px; gap:8px; flex-wrap:wrap; }
+  .lang{ display:flex; gap:4px; }
+  .lang button{ padding:5px 9px; font-size:11px; background:transparent; color:var(--slate); border-color:var(--line); }
+  .lang button.active{ background:var(--navy); color:#fff; border-color:var(--navy); }
+  .mute{ background:transparent; color:var(--slate); border-color:var(--line); font-size:11px; padding:5px 9px; }
+  .mute.on{ color:var(--navy); border-color:var(--navy); }
+
+  footer{ text-align:center; color:#8C92AC; font-size:10.5px; margin-top:14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <h1>VisionAid</h1>
+    <p>Prototype walkthrough — tap Play to simulate a live scan</p>
+  </div>
+
+  <div class="frame">
+    <div class="badges">
+      <span class="badge"><span class="dot"></span>On-device</span>
+      <span class="badge">No internet used</span>
+    </div>
+
+    <div class="scene">
+      <svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+        <rect x="0" y="0" width="400" height="300" fill="#E4DFCE"/>
+        <rect x="0" y="230" width="400" height="70" fill="#C9C2AA"/>
+        <rect x="60" y="120" width="60" height="110" fill="#8B6B43"/>
+        <circle cx="108" cy="178" r="3" fill="#3E2C17"/>
+        <rect x="250" y="150" width="50" height="60" fill="#5C6B8A"/>
+        <rect x="255" y="140" width="40" height="14" fill="#3A4A6B"/>
+        <rect x="300" y="60" width="70" height="30" fill="#2F3A56"/>
+        <text x="335" y="80" font-size="13" fill="#F4F1E9" text-anchor="middle" font-family="Arial" font-weight="bold">EXIT</text>
+      </svg>
+      <div class="scanline" id="scan"></div>
+
+      <div class="box" id="boxHazard" style="left:14%; top:38%; width:18%; height:38%;">
+        <span class="tag">Chair · 1.2 m</span>
+      </div>
+      <div class="box obj" id="boxObj" style="left:62%; top:48%; width:14%; height:22%;">
+        <span class="tag">Door · 3 m</span>
+      </div>
+      <div class="box text" id="boxText" style="left:75%; top:18%; width:19%; height:12%;">
+        <span class="tag">Text</span>
+      </div>
+
+      <div class="dir left" id="dirLeft">&#8592;</div>
+      <div class="dir ahead" id="dirAhead">&#8593;</div>
+    </div>
+
+    <div class="caption">
+      <div class="spk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="4,9 8,9 13,4 13,20 8,15 4,15"/><path id="wave1" d="M17 8a5 5 0 0 1 0 8" opacity="0"/><path id="wave2" d="M19.5 5a9 9 0 0 1 0 14" opacity="0"/></svg></div>
+      <div class="ctext" id="caption">Press Play to start the scan.</div>
+    </div>
+
+    <div class="controls">
+      <div class="steps" id="steps"></div>
+      <div style="display:flex; gap:6px;">
+        <button class="ghost" id="replayBtn">Replay</button>
+        <button id="playBtn">Play</button>
+      </div>
+    </div>
+
+    <div class="row2">
+      <div class="lang" id="lang">
+        <button class="active" data-l="en">EN</button>
+        <button data-l="hi">HI</button>
+        <button data-l="mr">MR</button>
+      </div>
+      <button class="mute" id="muteBtn">Speaker: on</button>
+    </div>
+  </div>
+
+  <footer>VisionAid · Major Project — First Review · MIT Academy of Engineering</footer>
+</div>
+
+<script>
+const steps = [
+  {
+    caption: { en:"Scanning surroundings\u2026", hi:"आसपास का स्कैन हो रहा है…", mr:"आजूबाजूचा स्कॅन सुरू आहे…" },
+    show: { scan:true }
+  },
+  {
+    priority: "HAZARD \u2014 ANNOUNCED FIRST",
+    caption: { en:"Chair on your left, 1.2 metres.", hi:"आपकी बाईं ओर कुर्सी, 1.2 मीटर।", mr:"तुमच्या डावीकडे खुर्ची, 1.2 मीटर." },
+    show: { boxHazard:true, dirLeft:true }
+  },
+  {
+    caption: { en:"Door ahead, 3 metres.", hi:"सामने दरवाज़ा, 3 मीटर।", mr:"समोर दरवाजा, 3 मीटर." },
+    show: { boxHazard:true, boxObj:true, dirAhead:true }
+  },
+  {
+    caption: { en:"Sign reads: EXIT.", hi:"साइन पर लिखा है: EXIT.", mr:"फलकावर लिहिले आहे: EXIT." },
+    show: { boxHazard:true, boxObj:true, boxText:true }
+  },
+  {
+    caption: { en:"Done \u2014 fully offline, no data sent.", hi:"पूर्ण — पूरी तरह ऑफ़लाइन, कोई डेटा नहीं भेजा गया।", mr:"पूर्ण — पूर्णपणे ऑफलाइन, कोणताही डेटा पाठवला नाही." },
+    show: {}
+  }
+];
+
+let lang = "en";
+let muted = false;
+let idx = -1;
+let playing = false;
+let timer = null;
+
+const sceneIds = ["scan","boxHazard","boxObj","boxText","dirLeft","dirAhead"];
+const elCaption = document.getElementById("caption");
+const stepsEl = document.getElementById("steps");
+const playBtn = document.getElementById("playBtn");
+
+steps.forEach((_,i)=>{
+  const d = document.createElement("span");
+  d.dataset.i = i;
+  stepsEl.appendChild(d);
+});
+
+function applyVisual(show){
+  sceneIds.forEach(id=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+    if(id === "scan"){
+      el.classList.toggle("on", !!show.scan);
+    } else {
+      el.classList.toggle("show", !!show[id]);
+    }
+  });
+}
+
+function speak(text){
+  if(muted) return;
+  try{
+    if(!("speechSynthesis" in window)) return;
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.rate = 1;
+    window.speechSynthesis.speak(u);
+  }catch(e){ /* speech not available */ }
+}
+
+function renderStep(i){
+  const s = steps[i];
+  applyVisual(s.show);
+  let html = "";
+  if(s.priority){ html += '<span class="priority">'+s.priority+'</span><br>'; }
+  html += s.caption[lang];
+  elCaption.innerHTML = html;
+  speak(s.caption[lang]);
+  [...stepsEl.children].forEach((d,j)=> d.classList.toggle("active", j===i));
+}
+
+function next(){
+  idx++;
+  if(idx >= steps.length){
+    playing = false;
+    playBtn.textContent = "Play";
+    clearTimeout(timer);
+    return;
+  }
+  renderStep(idx);
+  timer = setTimeout(next, 2600);
+}
+
+function startPlay(){
+  clearTimeout(timer);
+  idx = -1;
+  applyVisual({});
+  playing = true;
+  playBtn.textContent = "Playing…";
+  next();
+}
+
+playBtn.addEventListener("click", ()=>{
+  if(playing) return;
+  startPlay();
+});
+document.getElementById("replayBtn").addEventListener("click", startPlay);
+
+document.getElementById("lang").addEventListener("click", (e)=>{
+  const b = e.target.closest("button");
+  if(!b) return;
+  lang = b.dataset.l;
+  [...document.getElementById("lang").children].forEach(x=>x.classList.toggle("active", x===b));
+  if(idx >= 0 && idx < steps.length){
+    elCaption.innerHTML = (steps[idx].priority ? '<span class="priority">'+steps[idx].priority+'</span><br>' : '') + steps[idx].caption[lang];
+  }
+});
+
+const muteBtn = document.getElementById("muteBtn");
+muteBtn.addEventListener("click", ()=>{
+  muted = !muted;
+  muteBtn.textContent = "Speaker: " + (muted ? "off" : "on");
+  muteBtn.classList.toggle("on", !muted);
+  if(muted){ try{ window.speechSynthesis && window.speechSynthesis.cancel(); }catch(e){} }
+});
+</script>
+</body>
+</html>
