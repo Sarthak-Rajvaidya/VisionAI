@@ -24,3 +24,11 @@ Converts written text into spoken audio, usually using your computer's installed
 - Can work offline.
 - Supports speech rate and voice settings.
 Example: Your program says, “Person detected” aloud.
+
+4. numpy — Numerical and Array Operations
+
+NumPy provides efficient arrays and mathematical operations that are useful for processing image data.
+- Stores and manipulates numerical arrays.
+- Performs mathematical calculations.
+- Helps process pixel values and image dimensions.
+Example: Representing an image as a multidimensional array of pixel values
