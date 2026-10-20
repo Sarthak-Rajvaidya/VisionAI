@@ -9,14 +9,13 @@ class Speaker:
     """Speaks text in a background thread so the video loop never freezes."""
 
     def __init__(self, rate=170):
-        self.q = queue.Queue(maxsize=3)  # small queue: old messages get dropped, not piled up
+        self.q = queue.Queue(maxsize=3)
         self.rate = rate
         self.thread = threading.Thread(target=self._worker, daemon=True)
         self.thread.start()
 
     def _worker(self):
-        # The engine must be created inside the thread that uses it
-        engine = pyttsx3.init()
+        engine = pyttsx3.init()  # must be created inside this thread
         engine.setProperty("rate", self.rate)
         while True:
             text = self.q.get()
@@ -25,11 +24,20 @@ class Speaker:
             engine.say(text)
             engine.runAndWait()
 
-    def say(self, text):
+    def say(self, text, urgent=False):
+        """Returns True if the message was queued, False if it was dropped."""
+        if urgent:
+            # Throw away waiting messages so the warning is spoken next
+            try:
+                while True:
+                    self.q.get_nowait()
+            except queue.Empty:
+                pass
         try:
             self.q.put_nowait(text)
+            return True
         except queue.Full:
-            pass  # speaker is busy, skip this message
+            return False
 
     def stop(self):
         self.q.put(None)
