@@ -15,3 +15,12 @@ OpenCV helps your program capture, process, and manipulate images and videos.
 - Resizes images and converts color formats.
 - Displays the processed video feed.
 Example: Capturing live video from your laptop webcam
+
+
+3. pyttsx3 — Text-to-Speech (TTS)
+
+Converts written text into spoken audio, usually using your computer's installed speech engine.
+- Speaks detected object names.
+- Can work offline.
+- Supports speech rate and voice settings.
+Example: Your program says, “Person detected” aloud.
